@@ -1,0 +1,34 @@
+FROM samloh84/centos:7
+
+ARG PRODUCT=nodejs
+ARG PRODUCT_VERSION=6.11.0
+ARG TEMP_DIR_ROOT=/tmp/${PRODUCT}
+ARG TEMP_DIR=/${TEMP_DIR_ROOT}/${PRODUCT_VERSION}
+ARG INSTALL_DIR_ROOT=/opt/${PRODUCT}
+ARG INSTALL_DIR=${INSTALL_DIR_ROOT}/${PRODUCT_VERSION}
+
+ARG NODEJS_INSTALL_TARXZ_URL="https://nodejs.org/dist/v6.11.0/node-v6.11.0-linux-x64.tar.xz"
+ARG NODEJS_INSTALL_TARXZ=node-v6.11.0-linux-x64.tar.xz
+ARG NODEJS_INSTALL_TARXZ_SHA256SUM=2f0c0833a1dc0d1d52ef42d275d40125c5163bf92d2a663139beef70896f544d
+
+USER ${ROOT_UID}
+
+RUN \
+mkdir -p ${TEMP_DIR} ${INSTALL_DIR} && \
+pushd ${TEMP_DIR} && \
+curl -LjSs \
+${NODEJS_INSTALL_TARXZ_URL} -o ${NODEJS_INSTALL_TARXZ} && \
+echo "${NODEJS_INSTALL_TARXZ_SHA256SUM}  ${NODEJS_INSTALL_TARXZ}" | sha256sum -c - && \
+tar -xf ${NODEJS_INSTALL_TARXZ} --strip-components=1 -C ${INSTALL_DIR} && \
+pushd ${INSTALL_DIR} && \
+PATH=${PATH}:${INSTALL_DIR}/bin ${INSTALL_DIR}/bin/npm install npm@latest -g && \
+popd && \
+fix-ownership ${INSTALL_DIR} && \
+fix-permissions ${INSTALL_DIR} && \
+popd && \
+rm -rf ${TEMP_DIR_ROOT}
+
+ENV NODEJS_HOME ${INSTALL_DIR}
+ENV PATH ${PATH}:${NODEJS_HOME}/bin
+
+USER ${APP_UID}

@@ -51,7 +51,7 @@ rmi:
 save:
 	set -x; \
 	for TAG in $(TAGS); do IMAGE_NAME="$(REPOSITORY_NAME):$${TAG}"; \
-	ARCHIVE_NAME=$(shell echo "$(REPOSITORY_NAME).$${TAG}.tar.gz" | sed -e 's/[^a-zA-Z0-9_.-]/-/g'); \
+	ARCHIVE_NAME=$$(echo "$(REPOSITORY_NAME).$${TAG}.tar.gz" | sed -e 's/[^a-zA-Z0-9_.-]/-/g'); \
 	break; done; \
 	sudo docker save $${IMAGE_NAME} | gzip -9 > $${ARCHIVE_NAME}
 

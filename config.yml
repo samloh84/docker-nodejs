@@ -4,3 +4,5 @@ base_repositories:
 #  - samloh84/alpine
 #  - samloh84/debian
 #  - samloh84/ubuntu
+
+min_version: '>4.0.0'

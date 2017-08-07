@@ -1,4 +1,4 @@
-last_updated: 1501837283
+last_updated: 1502077547
 versions:
   0.1.100: {}
   0.1.101: {}
@@ -111,18 +111,7 @@ versions:
   0.12.15: {}
   0.12.16: {}
   0.12.17: {}
-  0.12.18:
-    files:
-      bin:
-        .tar.gz: {filename: node-v0.12.18-linux-x64.tar.gz, url: 'https://nodejs.org/dist/v0.12.18/node-v0.12.18-linux-x64.tar.gz'}
-        .tar.xz: {filename: node-v0.12.18-linux-x64.tar.xz, url: 'https://nodejs.org/dist/v0.12.18/node-v0.12.18-linux-x64.tar.xz'}
-      sig:
-        .txt: {filename: SHASUMS256.txt, url: 'https://nodejs.org/dist/v0.12.18/SHASUMS256.txt'}
-        .txt.asc: {filename: SHASUMS256.txt.asc, url: 'https://nodejs.org/dist/v0.12.18/SHASUMS256.txt.asc'}
-        .txt.sig: {filename: SHASUMS256.txt.sig, url: 'https://nodejs.org/dist/v0.12.18/SHASUMS256.txt.sig'}
-      src:
-        .tar.gz: {filename: node-v0.12.18.tar.gz, url: 'https://nodejs.org/dist/v0.12.18/node-v0.12.18.tar.gz'}
-        .tar.xz: {filename: node-v0.12.18.tar.xz, url: 'https://nodejs.org/dist/v0.12.18/node-v0.12.18.tar.xz'}
+  0.12.18: {}
   0.12.2: {}
   0.12.3: {}
   0.12.4: {}
@@ -284,14 +273,14 @@ versions:
   4.8.3: {}
   4.8.4:
     files:
-      bin:
+      binaries:
         .tar.gz: {filename: node-v4.8.4-linux-x64.tar.gz, url: 'https://nodejs.org/dist/v4.8.4/node-v4.8.4-linux-x64.tar.gz'}
         .tar.xz: {filename: node-v4.8.4-linux-x64.tar.xz, url: 'https://nodejs.org/dist/v4.8.4/node-v4.8.4-linux-x64.tar.xz'}
-      sig:
+      signatures:
         .txt: {filename: SHASUMS256.txt, url: 'https://nodejs.org/dist/v4.8.4/SHASUMS256.txt'}
         .txt.asc: {filename: SHASUMS256.txt.asc, url: 'https://nodejs.org/dist/v4.8.4/SHASUMS256.txt.asc'}
         .txt.sig: {filename: SHASUMS256.txt.sig, url: 'https://nodejs.org/dist/v4.8.4/SHASUMS256.txt.sig'}
-      src:
+      source:
         .tar.gz: {filename: node-v4.8.4.tar.gz, url: 'https://nodejs.org/dist/v4.8.4/node-v4.8.4.tar.gz'}
         .tar.xz: {filename: node-v4.8.4.tar.xz, url: 'https://nodejs.org/dist/v4.8.4/node-v4.8.4.tar.xz'}
   5.0.0: {}
@@ -303,13 +292,13 @@ versions:
   5.11.1: {}
   5.12.0:
     files:
-      bin:
+      binaries:
         .tar.gz: {filename: node-v5.12.0-linux-x64.tar.gz, url: 'https://nodejs.org/dist/v5.12.0/node-v5.12.0-linux-x64.tar.gz'}
         .tar.xz: {filename: node-v5.12.0-linux-x64.tar.xz, url: 'https://nodejs.org/dist/v5.12.0/node-v5.12.0-linux-x64.tar.xz'}
-      sig:
+      signatures:
         .txt: {filename: SHASUMS256.txt, url: 'https://nodejs.org/dist/v5.12.0/SHASUMS256.txt'}
         .txt.asc: {filename: SHASUMS256.txt.asc, url: 'https://nodejs.org/dist/v5.12.0/SHASUMS256.txt.asc'}
-      src:
+      source:
         .tar.gz: {filename: node-v5.12.0.tar.gz, url: 'https://nodejs.org/dist/v5.12.0/node-v5.12.0.tar.gz'}
         .tar.xz: {filename: node-v5.12.0.tar.xz, url: 'https://nodejs.org/dist/v5.12.0/node-v5.12.0.tar.xz'}
   5.2.0: {}
@@ -333,14 +322,14 @@ versions:
   6.11.1: {}
   6.11.2:
     files:
-      bin:
+      binaries:
         .tar.gz: {filename: node-v6.11.2-linux-x64.tar.gz, url: 'https://nodejs.org/dist/v6.11.2/node-v6.11.2-linux-x64.tar.gz'}
         .tar.xz: {filename: node-v6.11.2-linux-x64.tar.xz, url: 'https://nodejs.org/dist/v6.11.2/node-v6.11.2-linux-x64.tar.xz'}
-      sig:
+      signatures:
         .txt: {filename: SHASUMS256.txt, url: 'https://nodejs.org/dist/v6.11.2/SHASUMS256.txt'}
         .txt.asc: {filename: SHASUMS256.txt.asc, url: 'https://nodejs.org/dist/v6.11.2/SHASUMS256.txt.asc'}
         .txt.sig: {filename: SHASUMS256.txt.sig, url: 'https://nodejs.org/dist/v6.11.2/SHASUMS256.txt.sig'}
-      src:
+      source:
         .tar.gz: {filename: node-v6.11.2.tar.gz, url: 'https://nodejs.org/dist/v6.11.2/node-v6.11.2.tar.gz'}
         .tar.xz: {filename: node-v6.11.2.tar.xz, url: 'https://nodejs.org/dist/v6.11.2/node-v6.11.2.tar.xz'}
   6.2.0: {}
@@ -365,14 +354,14 @@ versions:
   7.10.0: {}
   7.10.1:
     files:
-      bin:
+      binaries:
         .tar.gz: {filename: node-v7.10.1-linux-x64.tar.gz, url: 'https://nodejs.org/dist/v7.10.1/node-v7.10.1-linux-x64.tar.gz'}
         .tar.xz: {filename: node-v7.10.1-linux-x64.tar.xz, url: 'https://nodejs.org/dist/v7.10.1/node-v7.10.1-linux-x64.tar.xz'}
-      sig:
+      signatures:
         .txt: {filename: SHASUMS256.txt, url: 'https://nodejs.org/dist/v7.10.1/SHASUMS256.txt'}
         .txt.asc: {filename: SHASUMS256.txt.asc, url: 'https://nodejs.org/dist/v7.10.1/SHASUMS256.txt.asc'}
         .txt.sig: {filename: SHASUMS256.txt.sig, url: 'https://nodejs.org/dist/v7.10.1/SHASUMS256.txt.sig'}
-      src:
+      source:
         .tar.gz: {filename: node-v7.10.1.tar.gz, url: 'https://nodejs.org/dist/v7.10.1/node-v7.10.1.tar.gz'}
         .tar.xz: {filename: node-v7.10.1.tar.xz, url: 'https://nodejs.org/dist/v7.10.1/node-v7.10.1.tar.xz'}
   7.2.0: {}
@@ -397,13 +386,13 @@ versions:
   8.2.0: {}
   8.2.1:
     files:
-      bin:
+      binaries:
         .tar.gz: {filename: node-v8.2.1-linux-x64.tar.gz, url: 'https://nodejs.org/dist/v8.2.1/node-v8.2.1-linux-x64.tar.gz'}
         .tar.xz: {filename: node-v8.2.1-linux-x64.tar.xz, url: 'https://nodejs.org/dist/v8.2.1/node-v8.2.1-linux-x64.tar.xz'}
-      sig:
+      signatures:
         .txt: {filename: SHASUMS256.txt, url: 'https://nodejs.org/dist/v8.2.1/SHASUMS256.txt'}
         .txt.asc: {filename: SHASUMS256.txt.asc, url: 'https://nodejs.org/dist/v8.2.1/SHASUMS256.txt.asc'}
         .txt.sig: {filename: SHASUMS256.txt.sig, url: 'https://nodejs.org/dist/v8.2.1/SHASUMS256.txt.sig'}
-      src:
+      source:
         .tar.gz: {filename: node-v8.2.1.tar.gz, url: 'https://nodejs.org/dist/v8.2.1/node-v8.2.1.tar.gz'}
         .tar.xz: {filename: node-v8.2.1.tar.xz, url: 'https://nodejs.org/dist/v8.2.1/node-v8.2.1.tar.xz'}

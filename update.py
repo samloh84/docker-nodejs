@@ -180,7 +180,7 @@ def load_nodejs_data(config, data_file, force_update=False, update_all_versions=
         versions_to_update = versions
     else:
         versions_to_update = [version for version in latest_major_versions if
-                              nodejs_data['versions'][version].get('files') is None]
+                              force_update or nodejs_data['versions'][version].get('files') is None]
 
     if versions_to_update:
         nodejs_version_files = list_nodejs_version_files(versions_to_update)
@@ -193,11 +193,12 @@ def load_nodejs_data(config, data_file, force_update=False, update_all_versions=
     if nodejs_data_updated:
         nodejs_data['last_updated'] = datetime_to_timestamp()
         write_yaml(data_file, nodejs_data)
+        print 'Updated ' + data_file
 
-    return nodejs_data, versions_to_update
+    return nodejs_data, latest_major_versions
 
 
-def render_dockerfiles(config, nodejs_data, versions_to_update, force_update=False):
+def render_dockerfiles(config, nodejs_data, latest_major_versions, force_update=False):
     jinja2_env = jinja2.Environment(loader=jinja2.FileSystemLoader(os.path.abspath('templates')))
 
     for base_repository in config['base_repositories']:
@@ -213,7 +214,7 @@ def render_dockerfiles(config, nodejs_data, versions_to_update, force_update=Fal
             base_image_name = base_repository + ':' + base_repository_tag
             tag_suffix = base_os + base_repository_tag
 
-            for version in versions_to_update:
+            for version in latest_major_versions:
                 image_tags = [version, version + '-' + tag_suffix]
                 dockerfile_context = os.path.join(os.getcwd(), version, tag_suffix)
 
@@ -238,8 +239,10 @@ def render_dockerfiles(config, nodejs_data, versions_to_update, force_update=Fal
 
                     if force_update or not dockerfile_exists:
                         write_file(dockerfile_path, dockerfile_template.render(render_data))
+                        print 'Generated ' + dockerfile_path
                     if force_update or not makefile_exists:
                         write_file(makefile_path, makefile_template.render(render_data))
+                        print 'Generated ' + makefile_path
 
 
 def main(argv):
@@ -258,8 +261,8 @@ def main(argv):
 
     config = load_yaml(config_file)
 
-    nodejs_data, versions_to_update = load_nodejs_data(config, data_file, force_update, update_all)
-    render_dockerfiles(config, nodejs_data, versions_to_update, force_update)
+    nodejs_data, latest_major_versions = load_nodejs_data(config, data_file, force_update, update_all)
+    render_dockerfiles(config, nodejs_data, latest_major_versions, force_update)
 
 
 if __name__ == '__main__':

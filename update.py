@@ -247,8 +247,8 @@ def render_dockerfiles(config, nodejs_data, latest_major_versions, force_update=
 
 def main(argv):
     parser = argparse.ArgumentParser(description='Updates NodeJS data file with version URLs and Dockerfiles.')
-    parser.add_argument('--data-file', nargs=1, dest='data_file', default=os.path.abspath('nodejs.yml'))
-    parser.add_argument('--config-file', nargs=1, dest='config_file', default=os.path.abspath('config.yml'))
+    parser.add_argument('--data-file', nargs='?', dest='data_file', default=os.path.abspath('nodejs.yml'))
+    parser.add_argument('--config-file', nargs='?', dest='config_file', default=os.path.abspath('config.yml'))
     parser.add_argument('-f', '--force-update', dest='force_update', action='store_true')
     parser.add_argument('-a', '--update-all', dest='update_all', action='store_true')
 

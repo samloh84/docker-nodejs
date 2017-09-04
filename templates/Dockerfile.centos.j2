@@ -1,5 +1,43 @@
 FROM {{ base_image_name }}
 
+{%- import 'macros.j2' as macros -%}
+{%- if files['checksums']['.txt.asc'] -%}
+{% set checksums_build_args -%}
+ARG NODEJS_GPG_KEYS="94AE36675C464D64BAFA68DD7434390BDBE9B9C5 B9AE9905FFD7803F25714661B63B535A4C206CA9 56730D5401028683275BD23C23EFEFE93C4CFFFE 71DCFD284A79C3B38668286BC97EC7A07EDE3FC1 FD3A5288F042B6850C66B31F09FE44734EB7990E C4F0DFFF4E8C1A8236409D08E73BC641CC11F4C8 DD8F2338BAE7501E3DD5AC78C273792F7D83545D"
+ARG NODEJS_CHECKSUMS_URL="{{ files['checksums']['.txt.asc']['url'] }}"
+ARG NODEJS_CHECKSUMS="{{ files['checksums']['.txt.asc']['filename'] }}"
+{%- endset %}
+{% set download_checksums -%}
+{{ macros.curl('${NODEJS_CHECKSUMS_URL}', '${NODEJS_CHECKSUMS}') }} && \
+{%- endset %}
+{% set download_and_verify_checksums -%}
+{{ macros.import_gpg_key('${NODEJS_GPG_KEYS}') }} && \
+{{ macros.curl('${NODEJS_CHECKSUMS_URL}', '${NODEJS_CHECKSUMS}') }} && \
+{{ macros.gpg_verify('${NODEJS_CHECKSUMS}') }} && \
+{%- endset %}
+{%- endif -%}
+{%- if files['binaries']['.tar.xz'] -%}
+{% set binaries_build_args -%}
+ARG NODEJS_BINARIES_URL="{{ files['binaries']['.tar.xz']['url'] }}"
+ARG NODEJS_BINARIES="{{ files['binaries']['.tar.xz']['filename'] }}"
+{%- endset %}
+{%- elif files['binaries']['.tar.gz'] -%}
+{% set binaries_build_args -%}
+ARG NODEJS_BINARIES_URL="{{ files['binaries']['.tar.gz']['url'] }}"
+ARG NODEJS_BINARIES="{{ files['binaries']['.tar.gz']['filename'] }}"
+{%- endset %}
+{%- elif files['source']['.tar.xz'] -%}
+{% set source_build_args -%}
+ARG NODEJS_SOURCE_URL="{{ files['source']['.tar.xz']['url'] }}"
+ARG NODEJS_SOURCE="{{ files['source']['.tar.xz']['filename'] }}"
+{% endset -%}
+{%- elif files['source']['.tar.gz'] -%}
+{% set source_build_args -%}
+ARG NODEJS_SOURCE_URL="{{ files['source']['.tar.gz']['url'] }}"
+ARG NODEJS_SOURCE="{{ files['source']['.tar.gz']['filename'] }}"
+{%- endset %}
+{%- endif -%}
+
 ARG PRODUCT=nodejs
 ARG PRODUCT_VERSION={{ version }}
 ARG TEMP_DIR_ROOT=/tmp/${PRODUCT}
@@ -7,48 +45,51 @@ ARG TEMP_DIR=/${TEMP_DIR_ROOT}/${PRODUCT_VERSION}
 ARG INSTALL_DIR_ROOT=/opt/${PRODUCT}
 ARG INSTALL_DIR=${INSTALL_DIR_ROOT}/${PRODUCT_VERSION}
 
-ARG NODEJS_GPG_KEYS="94AE36675C464D64BAFA68DD7434390BDBE9B9C5 B9AE9905FFD7803F25714661B63B535A4C206CA9 56730D5401028683275BD23C23EFEFE93C4CFFFE 71DCFD284A79C3B38668286BC97EC7A07EDE3FC1 FD3A5288F042B6850C66B31F09FE44734EB7990E C4F0DFFF4E8C1A8236409D08E73BC641CC11F4C8 DD8F2338BAE7501E3DD5AC78C273792F7D83545D"
-{%- if files['signatures']['.txt.asc'] %}
-ARG NODEJS_SHA256SUM_ASC_URL="{{ files['signatures']['.txt.asc']['url'] }}"
-ARG NODEJS_SHA256SUM_ASC="{{ files['signatures']['.txt.asc']['filename'] }}"
-{% endif %}
-{%- if files['binaries']['.tar.xz'] %}
-ARG NODEJS_INSTALL_TARXZ_URL="{{ files['binaries']['.tar.xz']['url'] }}"
-ARG NODEJS_INSTALL_TARXZ="{{ files['binaries']['.tar.xz']['filename'] }}"
-{% elif files['binaries']['.tar.gz'] %}
-ARG NODEJS_INSTALL_TARGZ_URL="{{ files['binaries']['.tar.gz']['url'] }}"
-ARG NODEJS_INSTALL_TARGZ="{{ files['binaries']['.tar.gz']['filename'] }}"
-{% endif %}
+{% if binaries_build_args -%}
+{{ binaries_build_args }}
+{%- elif source_build_args -%}
+{{ source_build_args }}
+{%- endif %}
+{% if checksums_build_args -%}
+{{ checksums_build_args }}
+{%- endif %}
+{% if checksums_build_args -%}
+{{ checksums_build_args }}
+{%- endif %}
+
 USER ${ROOT_UID}
 
 RUN \
 mkdir -p ${TEMP_DIR} ${INSTALL_DIR} && \
-pushd ${TEMP_DIR} && \
-for NODEJS_GPG_KEY in ${NODEJS_GPG_KEYS}; do gpg --keyserver pool.sks-keyservers.net --recv-keys ${NODEJS_GPG_KEY}; done && \
-{%- if files['binaries']['.tar.xz'] %}
-curl -LjSs \
-${NODEJS_INSTALL_TARXZ_URL} -o ${NODEJS_INSTALL_TARXZ} && \
-
-{%- if files['signatures']['.txt.asc'] %}
-curl -LjSs \
-${NODEJS_SHA256SUM_ASC_URL} -o ${NODEJS_SHA256SUM_ASC} && \
-{%- if files['binaries']['.tar.xz'] %}
-grep ${NODEJS_INSTALL_TARXZ} ${NODEJS_SHA256SUM_ASC} | sha256sum -c - && \
-{% elif files['binaries']['.tar.gz'] %}
-grep ${NODEJS_INSTALL_TARGZ} ${NODEJS_SHA256SUM_ASC} | sha256sum -c - && \
-{% endif %}
-{% endif %}
-{%- if files['binaries']['.tar.xz'] %}
-tar -xf ${NODEJS_INSTALL_TARXZ} --strip-components=1 -C ${INSTALL_DIR} && \
-{% elif files['binaries']['.tar.gz'] %}
-tar -xzf ${NODEJS_INSTALL_TARGZ} --strip-components=1 -C ${INSTALL_DIR} && \
-{% endif %}
-pushd ${INSTALL_DIR} && \
+cd ${TEMP_DIR} && \
+{% if download_checksums -%}
+{{ download_checksums }}
+{% if download_and_verify_checksums -%}
+{{ download_and_verify_checksums }}
+{%- endif %}
+{%- endif %}
+{% if binaries_build_args -%}
+{{ macros.curl('${NODEJS_BINARIES_URL}', '${NODEJS_BINARIES}') }} && \
+{% if checksums_build_args -%}
+{{ macros.sha256_verify_file('${NODEJS_CHECKSUMS}','${NODEJS_BINARIES}') }} && \
+{%- endif %}
+{{ macros.extract_tarball('${NODEJS_BINARIES}', '${INSTALL_DIR}') }} && \
+{%- elif source_build_args -%}
+{{ macros.curl('${NODEJS_SOURCE_URL}', '${NODEJS_SOURCE}') }} && \
+{% if checksums_build_args -%}
+{{ macros.sha256_verify_file('${NODEJS_CHECKSUMS}','${NODEJS_SOURCE}') }} && \
+{%- endif %}
+mkdir -p ${TEMP_DIR}/build && \
+{{ macros.extract_tarball('${NODEJS_SOURCE}', '${TEMP_DIR}/build') }} && \
+cd ${TEMP_DIR}/build && \
+./configure --prefix=${INSTALL_DIR} && \
+make && \
+make install && \
+{%- endif %}
+cd ${INSTALL_DIR} && \
 PATH=${PATH}:${INSTALL_DIR}/bin ${INSTALL_DIR}/bin/npm install npm@latest -g && \
-popd && \
 fix-ownership ${INSTALL_DIR} && \
 fix-permissions ${INSTALL_DIR} && \
-popd && \
 rm -rf ${TEMP_DIR_ROOT}
 
 ENV NODEJS_HOME ${INSTALL_DIR}

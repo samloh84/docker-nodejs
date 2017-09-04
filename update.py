@@ -1,252 +1,87 @@
 #!/usr/bin/env python2
+import argparse
+import sys
+from pprint import pprint
 
-import os, sys, json, re, urlparse, errno, time, argparse
-from datetime import datetime, timedelta
-import yaml, semver, requests, grequests, jinja2
-from bs4 import BeautifulSoup
+from jinja2 import Environment, FileSystemLoader
+from pydash import get as _get, set_ as _set
+from pydash.objects import merge as _merge
 
-NODEJS_DISTRIBUTION_URL = "https://nodejs.org/dist/"
+from scraper import *
 
-
-def http_get(url, headers=None):
-    return requests.get(url, headers=headers)
-
-
-def http_multiget(urls, headers=None):
-    return zip(urls, grequests.map([grequests.get(url, headers=headers) for url in urls]))
+from util import *
 
 
-def list_docker_hub_image_tags(repository):
-    url = "https://hub.docker.com/v2/repositories/" + repository + "/tags"
-    request_headers = {'Accept': 'application/json'}
-
-    tags = []
-
-    while url is not None:
-        response_data = http_get(url, headers=request_headers).json()
-        tags += response_data["results"]
-        url = response_data["next"]
-
-    return tags
-
-
-def list_nodejs_versions():
-    nodejs_distribution_html = requests.get(NODEJS_DISTRIBUTION_URL).text
-    nodejs_distribution_soup = BeautifulSoup(nodejs_distribution_html, 'html.parser')
-
-    version_pattern = re.compile('^v(\d+\.\d+\.\d+)/$')
-
-    nodejs_version_links = nodejs_distribution_soup.find_all('a', href=version_pattern)
-
-    nodejs_versions = {}
-    for nodejs_version_link in nodejs_version_links:
-        nodejs_version = version_pattern.match(nodejs_version_link['href']).group(1)
-        nodejs_version_url = urlparse.urljoin(NODEJS_DISTRIBUTION_URL, nodejs_version_link['href'])
-
-        nodejs_versions[nodejs_version] = {'link': nodejs_version_url}
-
-    return nodejs_versions
-
-
-def list_nodejs_version_files(nodejs_versions):
-    def parse_html(nodejs_version_url, nodejs_version_html):
-        patterns = {
-            'signatures': re.compile('^SHASUMS256(\.txt(\.asc|\.sig)?)$'),
-            'binaries': re.compile('^node-v\d+\.\d+\.\d+-linux-x64(\.tar\.(gz|xz))$'),
-            'source': re.compile('^node-v\d+\.\d+\.\d+(\.tar\.(gz|xz))$')
-        }
-
-        nodejs_version_soup = BeautifulSoup(nodejs_version_html, 'html.parser')
-
-        nodejs_version_data = {}
-
-        for key, pattern in patterns.iteritems():
-            nodejs_version_data[key] = {}
-            nodejs_version_file_links = nodejs_version_soup.find_all('a', href=pattern)
-            for nodejs_version_file_link in nodejs_version_file_links:
-                filename = nodejs_version_file_link['href']
-                file_extension = pattern.match(filename).group(1)
-                nodejs_version_file_url = urlparse.urljoin(nodejs_version_url, nodejs_version_file_link['href'])
-                nodejs_version_data[key][file_extension] = {
-                    'filename': filename,
-                    'url': nodejs_version_file_url
-                }
-
-        return nodejs_version_data
-
-    nodejs_version_urls = map(lambda version: urlparse.urljoin(NODEJS_DISTRIBUTION_URL, 'v' + version + '/'),
-                              nodejs_versions)
-    nodejs_version_responses = http_multiget(nodejs_version_urls)
-    nodejs_version_html = map(lambda response_tuple: response_tuple[1].text, nodejs_version_responses)
-
-    version_data = {}
-    for nodejs_version, nodejs_version_url, nodejs_version_html in zip(nodejs_versions, nodejs_version_urls,
-                                                                       nodejs_version_html):
-        version_data[nodejs_version] = parse_html(nodejs_version_url, nodejs_version_html)
-    return version_data
-
-
-def filter_latest_major_versions(versions, min_ver=None, max_ver=None):
-    major_versions = {}
-
-    for version in versions:
-        version_info = semver.parse_version_info(version)
-
-        if min_ver is not None and not semver.match(version, min_ver):
-            continue
-
-        if max_ver is not None and not semver.match(version, max_ver):
-            continue
-
-        major_version = str(version_info.major)
-        current_major_version = major_versions.get(major_version)
-        if current_major_version is None or semver.compare(version, current_major_version) > 0:
-            major_versions[major_version] = version
-
-    return major_versions.values()
-
-
-def load_file(filename):
-    filename = os.path.abspath(filename)
-    with open(filename, 'r') as f:
-        return f.read()
-
-
-def load_yaml(filename):
-    return yaml.safe_load(load_file(filename))
-
-
-def write_file(filename, data):
-    filename = os.path.abspath(filename)
-    file_dir = os.path.dirname(filename)
-    mkdirp(file_dir)
-    with open(filename, 'w') as f:
-        f.write(data)
-
-
-def write_yaml(filename, data):
-    write_file(filename, yaml.safe_dump(data))
-
-
-def datetime_to_timestamp(date=None):
-    if date is None:
-        date = datetime.now()
-    return int(time.mktime(date.timetuple()))
-
-
-def timestamp_to_datetime(timestamp):
-    if timestamp is None or timestamp == "":
-        return None
-    return datetime.fromtimestamp(int(timestamp))
-
-
-def mkdirp(path):
-    try:
-        os.makedirs(path)
-    except OSError as exc:
-        if exc.errno == errno.EEXIST and os.path.isdir(path):
-            pass
-
-
-def load_nodejs_data(config, data_file, force_update=False, update_all_versions=False):
-    current_datetime = datetime.now()
-    current_timestamp = datetime_to_timestamp(current_datetime)
-
-    nodejs_data = {'versions': {}}
-    last_updated = None
-    nodejs_data_updated = False
-
-    try:
-        if os.path.isfile(data_file):
-            nodejs_data = load_yaml(data_file)
-            last_updated = timestamp_to_datetime(nodejs_data['last_updated'])
-    except:
-        pass
-
-    update = force_update or last_updated is None or last_updated + timedelta(days=1) <= current_datetime
-
-    if update:
-        versions = list_nodejs_versions()
-        for version in versions:
-            if nodejs_data['versions'].get(version) is None:
-                nodejs_data['versions'][version] = {}
-        nodejs_data_updated = True
-    else:
-        versions = nodejs_data['versions'].keys()
-
-    latest_major_versions = filter_latest_major_versions(versions, config.get('min_version'), config.get('max_version'))
+def update_nodejs_data(data, config, update_all_versions=False):
+    scraper = NodeJsScraper(config)
+    versions = scraper.list_version_urls().keys()
 
     if update_all_versions:
         versions_to_update = versions
     else:
-        versions_to_update = [version for version in latest_major_versions if
-                              force_update or nodejs_data['versions'][version].get('files') is None]
+        versions_to_update = filter_versions(versions, config.get('version_constraints'))
 
-    if versions_to_update:
-        nodejs_version_files = list_nodejs_version_files(versions_to_update)
-        for version, version_files in nodejs_version_files.iteritems():
-            if nodejs_data['versions'][version].get('files') is None:
-                nodejs_data['versions'][version]['files'] = {}
-            nodejs_data['versions'][version]['files'].update(version_files)
-        nodejs_data_updated = True
-
-    if nodejs_data_updated:
-        nodejs_data['last_updated'] = datetime_to_timestamp()
-        write_yaml(data_file, nodejs_data)
-        print 'Updated ' + data_file
-
-    return nodejs_data, latest_major_versions
+    _merge(data, {'versions': scraper.list_version_files(versions)}, {'last_updated': datetime_to_timestamp()})
+    return data
 
 
-def render_dockerfiles(config, nodejs_data, latest_major_versions, force_update=False):
-    jinja2_env = jinja2.Environment(loader=jinja2.FileSystemLoader(os.path.abspath('templates')))
+def render_nodejs_dockerfiles(data, config, update_all_versions=False, force_update=False):
+    env = Environment(loader=FileSystemLoader(os.path.abspath('templates')))
+    repository_name = config['repository_name']
+    base_repositories = config['base_repositories']
+    template_files = config['templates']
 
-    for base_repository in config['base_repositories']:
-        base_repository_tags = [base_repository_tag['name'] for base_repository_tag in
-                                list_docker_hub_image_tags(base_repository) if base_repository_tag['name'] != 'latest']
+    versions = data['versions'].keys()
 
-        base_os = base_repository[base_repository.rfind('/') + 1:]
+    if update_all_versions:
+        versions_to_update = versions
+    else:
+        versions_to_update = filter_versions(versions, config.get('version_constraints'))
 
-        dockerfile_template = jinja2_env.select_template(['Dockerfile.' + base_os + '.j2', 'Dockerfile.j2'])
-        makefile_template = jinja2_env.select_template(['Makefile.' + base_os + '.j2', 'Makefile.j2'])
+    for version in versions_to_update:
+        version_files = data['versions'][version]
 
-        for base_repository_tag in base_repository_tags:
-            base_image_name = base_repository + ':' + base_repository_tag
-            tag_suffix = base_os + base_repository_tag
+        for base_repository in base_repositories:
+            base_repository_name = base_repository[base_repository.rfind('/') + 1:]
+            base_repository_tags = [tag['name'] for tag in list_docker_hub_image_tags(base_repository) if
+                                    tag['name'] != 'latest']
 
-            for version in latest_major_versions:
-                image_tags = [version, version + '-' + tag_suffix]
-                dockerfile_context = os.path.join(os.getcwd(), version, tag_suffix)
+            for base_repository_tag in base_repository_tags:
+                base_image_name = base_repository + ':' + base_repository_tag
 
-                dockerfile_path = os.path.join(dockerfile_context, 'Dockerfile')
-                makefile_path = os.path.join(dockerfile_context, 'Makefile')
+                dockerfile_context = os.path.join(os.getcwd(), version, base_repository_name + base_repository_tag)
 
-                dockerfile_exists = os.path.exists(dockerfile_path)
-                makefile_exists = os.path.exists(makefile_path)
+                tags = [version, version + '-' + base_repository_name + base_repository_tag]
+                version_info = semver.parse_version_info(version)
 
-                if force_update or not dockerfile_exists or not makefile_exists:
-                    render_data = {
-                        'version': version,
-                        'repository_name': config['repository_name'],
-                        'base_os': base_os,
-                        'base_image_name': base_image_name,
-                        'tag_suffix': tag_suffix,
-                        'dockerfile_context': dockerfile_context,
-                        'image_tags': image_tags
-                    }
+                render_data = {
+                    'version': version,
+                    'version_info': version_info,
+                    'files': version_files,
+                    'base_repository_name': base_repository_name,
+                    'base_image_name': base_image_name,
+                    'config': config,
+                    'repository_name': repository_name,
+                    'tags': tags
+                }
 
-                    render_data.update(nodejs_data['versions'][version])
+                for template_file in template_files:
+                    template_filenames = [
+                        template_file + '.' + base_repository_name + base_repository_tag + '.' + '.j2',
+                        template_file + '.' + base_repository_name + '.j2',
+                        template_file + '.j2'
+                    ]
 
-                    if force_update or not dockerfile_exists:
-                        write_file(dockerfile_path, dockerfile_template.render(render_data))
-                        print 'Generated ' + dockerfile_path
-                    if force_update or not makefile_exists:
-                        write_file(makefile_path, makefile_template.render(render_data))
-                        print 'Generated ' + makefile_path
+                    template = env.select_template(template_filenames)
+
+                    template_render_path = os.path.join(dockerfile_context, template_file)
+                    if not os.path.exists(template_render_path) or force_update:
+                        write_file(template_render_path, template.render(render_data))
+                        print 'Rendered template: ' + template_render_path
 
 
 def main(argv):
-    parser = argparse.ArgumentParser(description='Updates NodeJS data file with version URLs and Dockerfiles.')
+    parser = argparse.ArgumentParser(description='Updates data file with urls and renders Dockerfiles.')
     parser.add_argument('--data-file', nargs='?', dest='data_file', default=os.path.abspath('nodejs.yml'))
     parser.add_argument('--config-file', nargs='?', dest='config_file', default=os.path.abspath('config.yml'))
     parser.add_argument('-f', '--force-update', dest='force_update', action='store_true')
@@ -261,9 +96,21 @@ def main(argv):
 
     config = load_yaml(config_file)
 
-    nodejs_data, latest_major_versions = load_nodejs_data(config, data_file, force_update, update_all)
-    render_dockerfiles(config, nodejs_data, latest_major_versions, force_update)
+    saved_data = load_data_file(data_file)
+    if saved_data is not None:
+        data, _, update = saved_data
+        perform_update = update or force_update
+    else:
+        data = {'versions': {}}
+        perform_update = True
+
+    if perform_update:
+        data = update_nodejs_data(data, config, update_all)
+        write_yaml(data_file, data)
+
+    render_nodejs_dockerfiles(data, config, update_all, force_update)
 
 
 if __name__ == '__main__':
     main(sys.argv)
+

@@ -1,0 +1,32 @@
+{% macro curl(url, path) -%}
+curl -LjSs {{ url }} -o {{ path }}
+{%- endmacro %}
+
+{% macro import_gpg_key(key) -%}
+for GPG_KEY in {{ key }}; do \
+gpg --keyserver pgp.mit.edu --recv-keys ${GPG_KEY} || \
+gpg --keyserver keyserver.pgp.com --recv-keys ${GPG_KEY} || \
+gpg --keyserver ha.pool.sks-keyservers.net --recv-keys ${GPG_KEY} ; \
+done
+{%- endmacro %}
+
+{% macro gpg_verify_file(signature, file) -%}
+gpg --verify {{ signature }} {{ file }}
+{%- endmacro %}
+
+{% macro gpg_verify(signature) -%}
+gpg --verify {{ signature }}
+{%- endmacro %}
+
+{% macro sha256_verify_file(hash_file, file) -%}
+grep {{ file }} {{ hash_file }} | sha256sum -c -
+{%- endmacro %}
+
+{% macro sha256_verify_hash(hash, file) -%}
+echo "{{ file }}  {{ hash }}" | sha256sum -c -
+{%- endmacro %}
+
+{% macro extract_tarball(tarball, destination) -%}
+tar -xf {{ tarball }} --strip-components=1 -C {{ destination }}
+{%- endmacro %}
+

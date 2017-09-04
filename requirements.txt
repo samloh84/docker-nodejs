@@ -5,4 +5,5 @@ semver==2.7.7
 Jinja2==2.9.6
 gevent==1.2.2
 grequests==0.3.0
+pydash==4.1.0
 

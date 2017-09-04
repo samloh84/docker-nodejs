@@ -5,4 +5,24 @@ base_repositories:
 #  - samloh84/debian
 #  - samloh84/ubuntu
 
-min_version: '>4.0.0'
+version_constraints:
+  - '>4.0.0'
+
+templates:
+  - Dockerfile
+  - Makefile
+
+distribution_url: https://nodejs.org/dist/
+version_url_pattern: v(\d+\.\d+\.\d+)/$
+file_patterns:
+  source:
+    .tar.gz: v(\d+\.\d+\.\d+)/(node-v(?:\d+\.\d+\.\d+)(\.tar\.gz))$
+    .tar.xz: v(\d+\.\d+\.\d+)/(node-v(?:\d+\.\d+\.\d+)(\.tar\.xz))$
+  binaries:
+    .tar.gz: v(\d+\.\d+\.\d+)/(node-v(?:\d+\.\d+\.\d+)-(.+)(\.tar\.gz))$
+    .tar.xz: v(\d+\.\d+\.\d+)/(node-v(?:\d+\.\d+\.\d+)-(.+)(\.tar\.xz))$
+  checksums:
+    sha256:
+      pattern: v(\d+\.\d+\.\d+)/(SHASUMS256(\.txt))$
+      signature: v(\d+\.\d+\.\d+)/(SHASUMS256(\.txt\.sig))$
+    signed_sha256: v(\d+\.\d+\.\d+)/(SHASUMS256(\.txt\.asc))$

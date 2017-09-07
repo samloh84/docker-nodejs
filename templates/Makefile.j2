@@ -1,5 +1,6 @@
 REPOSITORY_NAME := {{ repository_name }}
-TAGS := {{ image_tags | join(' ') }}
+REGISTRIES := {{ registries }}
+TAGS := {{ tags | join(' ') }}
 CONTAINER_NAME := $(shell echo $(REPOSITORY_NAME) | sed -e 's/[^a-zA-Z0-9_.-]/-/g')
 
 .PHONY: all clean build push bash sudo run exec rm rmi
@@ -13,7 +14,15 @@ build:
 
 push:
 	set -x; \
-	for TAG in $(TAGS); do sudo docker push $(REPOSITORY_NAME):$${TAG}; done
+	if [[ -z "$(REGISTRIES)" ]]; then \
+	for TAG in $(TAGS); do sudo docker push $(REPOSITORY_NAME):$${TAG}; done; \
+	else \
+	for REGISTRY in $(REGISTRIES); do \
+	for TAG in $(TAGS); do \
+	sudo docker push $${REGISTRY}/$(REPOSITORY_NAME):$${TAG}; \
+	done; \
+	done; \
+	fi
 
 run:
 	set -x; \
@@ -25,7 +34,8 @@ run:
 	for TAG in $(TAGS); do IMAGE_NAME="$(REPOSITORY_NAME):$${TAG} "; break; done; \
 	sudo docker run $${DOCKER_RUN_ARGS} $${IMAGE_NAME}
 
-bash:
+{% set container_shell = 'ash' if base_os == 'alpine' else 'bash' -%}
+{{ container_shell }}:
 	set -x; \
 	DOCKER_RUN_ARGS=""; \
 	DOCKER_RUN_ARGS+="--tty "; \
@@ -33,7 +43,7 @@ bash:
 	DOCKER_RUN_ARGS+="--rm "; \
 	DOCKER_RUN_ARGS+="--name $(CONTAINER_NAME) "; \
 	for TAG in $(TAGS); do IMAGE_NAME="$(REPOSITORY_NAME):$${TAG} "; break; done; \
-	sudo docker run $${DOCKER_RUN_ARGS} $${IMAGE_NAME} bash
+	sudo docker run $${DOCKER_RUN_ARGS} $${IMAGE_NAME} {{ container_shell }}
 
 sudo:
 	set -x; \
@@ -45,7 +55,7 @@ sudo:
 	DOCKER_RUN_ARGS+="--user 0 "; \
 	DOCKER_RUN_ARGS+="--privileged "; \
 	for TAG in $(TAGS); do IMAGE_NAME="$(REPOSITORY_NAME):$${TAG} "; break; done; \
-	sudo docker run $${DOCKER_RUN_ARGS} $${IMAGE_NAME} bash
+	sudo docker run $${DOCKER_RUN_ARGS} $${IMAGE_NAME} {{ container_shell }}
 
 rm:
 	set -x; \

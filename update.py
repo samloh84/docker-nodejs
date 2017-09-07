@@ -30,6 +30,7 @@ def render_nodejs_dockerfiles(data, config, update_all_versions=False, force_upd
     repository_name = config['repository_name']
     base_repositories = config['base_repositories']
     template_files = config['templates']
+    registries = config.get('registries')
 
     versions = data['versions'].keys()
 
@@ -58,6 +59,7 @@ def render_nodejs_dockerfiles(data, config, update_all_versions=False, force_upd
                     base_repository_name + base_repository_tag).group(0)
 
                 render_data = {
+                    'registries': registries,
                     'version': version,
                     'version_info': version_info,
                     'files': version_files,

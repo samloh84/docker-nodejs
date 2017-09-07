@@ -54,12 +54,16 @@ def render_nodejs_dockerfiles(data, config, update_all_versions=False, force_upd
                 tags = [version, version + '-' + base_repository_name + base_repository_tag]
                 version_info = semver.parse_version_info(version)
 
+                base_os = re.compile('centos|alpine|ubuntu|debian|fedora|rhel').search(
+                    base_repository_name + base_repository_tag).group(0)
+
                 render_data = {
                     'version': version,
                     'version_info': version_info,
                     'files': version_files,
                     'base_repository_name': base_repository_name,
                     'base_image_name': base_image_name,
+                    'base_os': base_os,
                     'config': config,
                     'repository_name': repository_name,
                     'tags': tags
@@ -113,4 +117,3 @@ def main(argv):
 
 if __name__ == '__main__':
     main(sys.argv)
-

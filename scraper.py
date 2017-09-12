@@ -95,7 +95,8 @@ def main(argv):
     scraper = NodeJsScraper(config)
     versions = scraper.list_version_urls()
     print_yaml(versions)
-    filtered_versions = filter_latest_versions(versions.keys(), version_constraints=config.get('version_constraints'))
+    filtered_versions = filter_latest_versions(versions.keys(),
+                                               version_constraints=config.get('version_constraints'))
     print_yaml(filtered_versions)
     files = scraper.list_version_files(filtered_versions)
     print_yaml(files)

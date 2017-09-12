@@ -45,7 +45,11 @@ def get_base_repository_info(config):
 
         registry_config = {}
         if registry is not None:
-            registry_config = pydash.get(config, ['base_repository_registries', registry])
+            registry_config_file = os.path.join(os.getcwd(), 'registries', registry + '.yml')
+            if os.path.exists(registry_config_file):
+                registry_config = load_yaml(registry_config_file)
+            else:
+                registry_config = pydash.get(config, ['base_repository_registries', registry], {})
 
         if tag is not None:
             tags = [tag]

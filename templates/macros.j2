@@ -10,6 +10,10 @@ gpg --keyserver ha.pool.sks-keyservers.net --recv-keys ${GPG_KEY} ; \
 done
 {%- endmacro %}
 
+{% macro import_gpg_key_file(key_file) -%}
+gpg --import {{ key_file }}
+{%- endmacro %}
+
 {% macro gpg_verify_file(signature, file) -%}
 gpg --verify {{ signature }} {{ file }}
 {%- endmacro %}

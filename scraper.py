@@ -2,26 +2,40 @@
 
 import sys
 
-from pydash import set_ as _set, flatten as _flatten
-
+import pydash
 from util import *
 
 
 class NodeJsScraper:
     def __init__(self, config):
-        self.distribution_url = config['distribution_url']
-        self.version_url_pattern = re.compile(config['version_url_pattern'])
+        self.starting_url = config['starting_url']
+
+        scraper_url_patterns = config['scraper_url_patterns']
+        if scraper_url_patterns is not None and not isinstance(scraper_url_patterns, list):
+            scraper_url_patterns = [scraper_url_patterns]
+        self.scraper_url_patterns = [re.compile(pattern) for pattern in scraper_url_patterns]
+        self.depth = config.get('scraper_depth')
+
+        version_url_patterns = config['version_url_patterns']
+        if not isinstance(version_url_patterns, list):
+            version_url_patterns = [version_url_patterns]
+        self.version_url_patterns = [re.compile(pattern) for pattern in version_url_patterns]
+
         self.pattern_tree = PatternTree(config['file_patterns'])
 
     def list_version_urls(self):
-        distribution_html = http_get(self.distribution_url).text
-        parsed_urls = parse_html_for_urls(distribution_html, self.distribution_url)
+        responses = deep_scrape(self.starting_url, url_patterns=self.scraper_url_patterns)
+        parse_lambda = lambda (_, response): parse_response_for_urls(response, regex_filters=self.scraper_url_patterns)
+        parsed_urls = map(parse_lambda, responses)
+        parsed_urls = pydash.flatten(parsed_urls)
         version_urls = {}
         for parsed_url in parsed_urls:
-            match = self.version_url_pattern.search(parsed_url)
-            if match is not None:
-                version = match.group(1)
-                version_urls[version] = parsed_url
+            for version_url_pattern in self.version_url_patterns:
+                match = version_url_pattern.search(parsed_url)
+                if match is not None:
+                    version = match.group(1)
+                    version_urls[version] = parsed_url
+                    break
         return version_urls
 
     def list_version_files(self, version, return_unmatched_urls=False):
@@ -30,11 +44,15 @@ class NodeJsScraper:
         else:
             versions = version
 
-        urls_to_parse = [urlparse.urljoin(self.distribution_url, 'v' + version + '/') for version in versions]
+        urls_to_parse = []
+
+        for version in versions:
+            version_url = urlparse.urljoin(self.starting_url, 'v' + version + '/')
+            urls_to_parse.append(version_url)
 
         responses = http_multiget(urls_to_parse)
 
-        parsed_urls = _flatten([parse_html_for_urls(response.text, url) for (url, response) in responses])
+        parsed_urls = pydash.flatten([parse_response_for_urls(response) for (_, response) in responses])
 
         version_files = {}
         unmatched_urls = []
@@ -52,7 +70,7 @@ class NodeJsScraper:
                     filename = match.group(2)
                     system = match.group(3)
                     extension = match.group(4)
-                    _set(version_files, [url_version, file_type, system, extension], {
+                    pydash.set_(version_files, [url_version, file_type, system, extension], {
                         'filename': filename,
                         'url': parsed_url
                     })
@@ -60,7 +78,7 @@ class NodeJsScraper:
                     url_version = match.group(1)
                     filename = match.group(2)
                     extension = match.group(3)
-                    _set(version_files, [url_version, file_type,  extension], {
+                    pydash.set_(version_files, [url_version, file_type, extension], {
                         'filename': filename,
                         'url': parsed_url
                     })
@@ -77,7 +95,7 @@ def main(argv):
     scraper = NodeJsScraper(config)
     versions = scraper.list_version_urls()
     print_yaml(versions)
-    filtered_versions = filter_versions(versions.keys(), config.get('version_constraints'))
+    filtered_versions = filter_latest_versions(versions.keys(), version_constraints=config.get('version_constraints'))
     print_yaml(filtered_versions)
     files = scraper.list_version_files(filtered_versions)
     print_yaml(files)

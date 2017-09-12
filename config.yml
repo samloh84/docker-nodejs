@@ -6,14 +6,18 @@ base_repositories:
 #  - samloh84/ubuntu
 
 version_constraints:
-  - '>4.0.0'
+  - '>=4.0.0'
 
 templates:
   - Dockerfile
   - Makefile
 
-distribution_url: https://nodejs.org/dist/
-version_url_pattern: v(\d+\.\d+\.\d+)/$
+starting_url: https://nodejs.org/dist/
+scraper_url_patterns:
+  - https://nodejs.org/dist/$
+  - https://nodejs.org/dist/v(\d+\.\d+\.\d+)/$
+version_url_patterns:
+  - https://nodejs.org/dist/v(\d+\.\d+\.\d+)/$
 file_patterns:
   source:
     .tar.gz: v(\d+\.\d+\.\d+)/(node-v(?:\d+\.\d+\.\d+)(\.tar\.gz))$

@@ -1,11 +1,11 @@
 #!/usr/bin/env python2
 import argparse
+import os
 import sys
 from pprint import pprint
 
 from jinja2 import Environment, FileSystemLoader
-from pydash import get as _get, set_ as _set
-from pydash.objects import merge as _merge
+import pydash
 
 from scraper import *
 
@@ -16,13 +16,58 @@ def update_nodejs_data(data, config, update_all_versions=False):
     scraper = NodeJsScraper(config)
     versions = scraper.list_version_urls().keys()
 
-    if update_all_versions:
+    version_constraints = config.get('version_constraints')
+    if update_all_versions or version_constraints is None:
         versions_to_update = versions
     else:
-        versions_to_update = filter_versions(versions, config.get('version_constraints'))
+        versions_to_update = filter_latest_versions(versions, version_constraints,
+                                                    normalize_version=normalize_version_to_semver)
 
-    _merge(data, {'versions': scraper.list_version_files(versions)}, {'last_updated': datetime_to_timestamp()})
+    pydash.objects.merge(data, {'versions': scraper.list_version_files(versions)},
+                         {'last_updated': datetime_to_timestamp()})
     return data
+
+
+def get_base_repository_info(config):
+    base_repositories = config.get('base_repositories')
+    base_repository_info = []
+    for base_repository in base_repositories:
+        image_name_components = parse_image_name(base_repository)
+        registry = image_name_components.get('registry')
+        repo = image_name_components.get('repo')
+        tag = image_name_components.get('tag')
+
+        i = repo.rfind('/')
+        if i != -1:
+            base_repository_name = repo[i + 1:]
+        else:
+            base_repository_name = repo
+
+        registry_config = {}
+        if registry is not None:
+            registry_config = pydash.get(config, ['base_repository_registries', registry])
+
+        if tag is not None:
+            tags = [tag]
+        else:
+            tags = list_repository_tags(repo,
+                                        registry=registry,
+                                        username=registry_config.get('username'),
+                                        password=registry_config.get('password'),
+                                        verify=registry_config.get('verify'))
+
+        tags = [tag for tag in tags if tag != 'latest']
+        tag_groups = group_tags(tags)
+
+        base_repository_info.append({
+            'base_repository': base_repository,
+            'image_name_components': image_name_components,
+            'name': base_repository_name,
+            'tags': tags,
+            'tag_groups': tag_groups
+        })
+
+    return base_repository_info
 
 
 def render_nodejs_dockerfiles(data, config, update_all_versions=False, force_update=False):
@@ -37,23 +82,31 @@ def render_nodejs_dockerfiles(data, config, update_all_versions=False, force_upd
     if update_all_versions:
         versions_to_update = versions
     else:
-        versions_to_update = filter_versions(versions, config.get('version_constraints'))
+        versions_to_update = filter_latest_versions(versions,
+                                                    version_constraints=config.get('version_constraints'),
+                                                    normalize_version=normalize_version_to_semver)
+
+    base_repository_info_list = get_base_repository_info(config)
 
     for version in versions_to_update:
         version_files = data['versions'][version]
 
-        for base_repository in base_repositories:
-            base_repository_name = base_repository[base_repository.rfind('/') + 1:]
-            base_repository_tags = [tag['name'] for tag in list_docker_hub_image_tags(base_repository) if
-                                    tag['name'] != 'latest']
+        for base_repository_info in base_repository_info_list:
 
-            for base_repository_tag in base_repository_tags:
+            base_repository = base_repository_info['base_repository']
+            tag_groups = base_repository_info['tag_groups']
+            base_repository_name = base_repository_info['name']
+
+            for tag_group in tag_groups:
+                base_repository_tag = tag_group[0]
                 base_image_name = base_repository + ':' + base_repository_tag
 
                 dockerfile_context = os.path.join(os.getcwd(), version, base_repository_name + base_repository_tag)
 
-                tags = [version, version + '-' + base_repository_name + base_repository_tag]
-                version_info = semver.parse_version_info(version)
+                tags = [version]
+                for tag in tag_group:
+                    tags.append(version + '-' + base_repository_name + tag)
+                version_info = semver.parse_version_info(normalize_version_to_semver(version))
 
                 base_os = re.compile('centos|alpine|ubuntu|debian|fedora|rhel').search(
                     base_repository_name + base_repository_tag).group(0)
@@ -109,6 +162,9 @@ def main(argv):
     else:
         data = {'versions': {}}
         perform_update = True
+
+    pprint(data)
+    pprint(perform_update)
 
     if perform_update:
         data = update_nodejs_data(data, config, update_all)

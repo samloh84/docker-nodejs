@@ -1,4 +1,4 @@
-last_updated: 1504489743
+last_updated: 1505202588
 versions:
   0.1.100:
     checksums:
@@ -11659,6 +11659,113 @@ versions:
       .tar.xz:
         filename: node-v6.11.2.tar.xz
         url: https://nodejs.org/dist/v6.11.2/node-v6.11.2.tar.xz
+  6.11.3:
+    binaries:
+      aix-ppc64:
+        .tar.gz:
+          filename: node-v6.11.3-aix-ppc64.tar.gz
+          url: https://nodejs.org/dist/v6.11.3/node-v6.11.3-aix-ppc64.tar.gz
+      darwin-x64:
+        .tar.gz:
+          filename: node-v6.11.3-darwin-x64.tar.gz
+          url: https://nodejs.org/dist/v6.11.3/node-v6.11.3-darwin-x64.tar.gz
+        .tar.xz:
+          filename: node-v6.11.3-darwin-x64.tar.xz
+          url: https://nodejs.org/dist/v6.11.3/node-v6.11.3-darwin-x64.tar.xz
+      headers:
+        .tar.gz:
+          filename: node-v6.11.3-headers.tar.gz
+          url: https://nodejs.org/dist/v6.11.3/node-v6.11.3-headers.tar.gz
+        .tar.xz:
+          filename: node-v6.11.3-headers.tar.xz
+          url: https://nodejs.org/dist/v6.11.3/node-v6.11.3-headers.tar.xz
+      linux-arm64:
+        .tar.gz:
+          filename: node-v6.11.3-linux-arm64.tar.gz
+          url: https://nodejs.org/dist/v6.11.3/node-v6.11.3-linux-arm64.tar.gz
+        .tar.xz:
+          filename: node-v6.11.3-linux-arm64.tar.xz
+          url: https://nodejs.org/dist/v6.11.3/node-v6.11.3-linux-arm64.tar.xz
+      linux-armv6l:
+        .tar.gz:
+          filename: node-v6.11.3-linux-armv6l.tar.gz
+          url: https://nodejs.org/dist/v6.11.3/node-v6.11.3-linux-armv6l.tar.gz
+        .tar.xz:
+          filename: node-v6.11.3-linux-armv6l.tar.xz
+          url: https://nodejs.org/dist/v6.11.3/node-v6.11.3-linux-armv6l.tar.xz
+      linux-armv7l:
+        .tar.gz:
+          filename: node-v6.11.3-linux-armv7l.tar.gz
+          url: https://nodejs.org/dist/v6.11.3/node-v6.11.3-linux-armv7l.tar.gz
+        .tar.xz:
+          filename: node-v6.11.3-linux-armv7l.tar.xz
+          url: https://nodejs.org/dist/v6.11.3/node-v6.11.3-linux-armv7l.tar.xz
+      linux-ppc64:
+        .tar.gz:
+          filename: node-v6.11.3-linux-ppc64.tar.gz
+          url: https://nodejs.org/dist/v6.11.3/node-v6.11.3-linux-ppc64.tar.gz
+        .tar.xz:
+          filename: node-v6.11.3-linux-ppc64.tar.xz
+          url: https://nodejs.org/dist/v6.11.3/node-v6.11.3-linux-ppc64.tar.xz
+      linux-ppc64le:
+        .tar.gz:
+          filename: node-v6.11.3-linux-ppc64le.tar.gz
+          url: https://nodejs.org/dist/v6.11.3/node-v6.11.3-linux-ppc64le.tar.gz
+        .tar.xz:
+          filename: node-v6.11.3-linux-ppc64le.tar.xz
+          url: https://nodejs.org/dist/v6.11.3/node-v6.11.3-linux-ppc64le.tar.xz
+      linux-s390x:
+        .tar.gz:
+          filename: node-v6.11.3-linux-s390x.tar.gz
+          url: https://nodejs.org/dist/v6.11.3/node-v6.11.3-linux-s390x.tar.gz
+        .tar.xz:
+          filename: node-v6.11.3-linux-s390x.tar.xz
+          url: https://nodejs.org/dist/v6.11.3/node-v6.11.3-linux-s390x.tar.xz
+      linux-x64:
+        .tar.gz:
+          filename: node-v6.11.3-linux-x64.tar.gz
+          url: https://nodejs.org/dist/v6.11.3/node-v6.11.3-linux-x64.tar.gz
+        .tar.xz:
+          filename: node-v6.11.3-linux-x64.tar.xz
+          url: https://nodejs.org/dist/v6.11.3/node-v6.11.3-linux-x64.tar.xz
+      linux-x86:
+        .tar.gz:
+          filename: node-v6.11.3-linux-x86.tar.gz
+          url: https://nodejs.org/dist/v6.11.3/node-v6.11.3-linux-x86.tar.gz
+        .tar.xz:
+          filename: node-v6.11.3-linux-x86.tar.xz
+          url: https://nodejs.org/dist/v6.11.3/node-v6.11.3-linux-x86.tar.xz
+      sunos-x64:
+        .tar.gz:
+          filename: node-v6.11.3-sunos-x64.tar.gz
+          url: https://nodejs.org/dist/v6.11.3/node-v6.11.3-sunos-x64.tar.gz
+        .tar.xz:
+          filename: node-v6.11.3-sunos-x64.tar.xz
+          url: https://nodejs.org/dist/v6.11.3/node-v6.11.3-sunos-x64.tar.xz
+      sunos-x86:
+        .tar.gz:
+          filename: node-v6.11.3-sunos-x86.tar.gz
+          url: https://nodejs.org/dist/v6.11.3/node-v6.11.3-sunos-x86.tar.gz
+        .tar.xz:
+          filename: node-v6.11.3-sunos-x86.tar.xz
+          url: https://nodejs.org/dist/v6.11.3/node-v6.11.3-sunos-x86.tar.xz
+    checksums:
+      .txt:
+        filename: SHASUMS256.txt
+        url: https://nodejs.org/dist/v6.11.3/SHASUMS256.txt
+      .txt.asc:
+        filename: SHASUMS256.txt.asc
+        url: https://nodejs.org/dist/v6.11.3/SHASUMS256.txt.asc
+      .txt.sig:
+        filename: SHASUMS256.txt.sig
+        url: https://nodejs.org/dist/v6.11.3/SHASUMS256.txt.sig
+    source:
+      .tar.gz:
+        filename: node-v6.11.3.tar.gz
+        url: https://nodejs.org/dist/v6.11.3/node-v6.11.3.tar.gz
+      .tar.xz:
+        filename: node-v6.11.3.tar.xz
+        url: https://nodejs.org/dist/v6.11.3/node-v6.11.3.tar.xz
   6.2.0:
     binaries:
       darwin-x64:

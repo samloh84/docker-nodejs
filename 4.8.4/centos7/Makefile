@@ -1,5 +1,5 @@
 REPOSITORY_NAME := samloh84/nodejs
-TAGS := 
+TAGS := 4.8.4 4.8.4-centos7
 CONTAINER_NAME := $(shell echo $(REPOSITORY_NAME) | sed -e 's/[^a-zA-Z0-9_.-]/-/g')
 
 .PHONY: all clean build push bash sudo run exec rm rmi
@@ -13,7 +13,7 @@ build:
 
 push:
 	set -x; \
-	for TAG in $(TAGS); do sudo docker push $(REPOSITORY_NAME):$${TAG}; done
+	for TAG in $(TAGS); do sudo docker push $(REPOSITORY_NAME):$${TAG}; done;
 
 run:
 	set -x; \

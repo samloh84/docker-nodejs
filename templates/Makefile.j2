@@ -1,7 +1,7 @@
 REPOSITORY_NAME := {{ repository_name }}
 {% if registries -%}
 REGISTRIES := {{ registries | join(' ') }}
-{%- endif -%}
+{% endif -%}
 TAGS := {{ tags | join(' ') }}
 CONTAINER_NAME := $(shell echo $(REPOSITORY_NAME) | sed -e 's/[^a-zA-Z0-9_.-]/-/g')
 
@@ -10,7 +10,13 @@ CONTAINER_NAME := $(shell echo $(REPOSITORY_NAME) | sed -e 's/[^a-zA-Z0-9_.-]/-/
 
 build:
 	set -x; \
+	if [[ -z "$${ORACLE_USERNAME}" ]]; then \
+	echo "ORACLE_USERNAME is not defined"; exit 1; fi; \
+	if [[ -z "$${ORACLE_PASSWORD}" ]]; then \
+	echo "ORACLE_PASSWORD is not defined"; exit 1; fi; \
 	DOCKER_BUILD_ARGS=""; \
+	DOCKER_BUILD_ARGS+="--build-arg ORACLE_USERNAME=$${ORACLE_USERNAME} "; \
+	DOCKER_BUILD_ARGS+="--build-arg ORACLE_PASSWORD=$${ORACLE_PASSWORD} "; \
 	for TAG in $(TAGS); do DOCKER_BUILD_ARGS+="-t $(REPOSITORY_NAME):$${TAG} "; done; \
 	{% if registries -%}
 	for REGISTRY in $(REGISTRIES); do \
@@ -18,7 +24,7 @@ build:
 	DOCKER_BUILD_ARGS+="-t $${REGISTRY}/$(REPOSITORY_NAME):$${TAG} "; \
 	done; \
 	done; \
-	{%- endif -%}
+	{% endif -%}
 	sudo docker build $${DOCKER_BUILD_ARGS} .
 
 push:

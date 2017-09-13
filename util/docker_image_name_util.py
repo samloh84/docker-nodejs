@@ -33,7 +33,7 @@ docker_image_name_pattern = re.compile(
     })
 
 docker_image_anchored_name_pattern = re.compile(
-    '^(?:(%(hostname_pattern)s)/)?(%(name_component_pattern)s(?:(?:/%(hostname_pattern)s)+)?)$' %
+    '^(?:(%(hostname_pattern)s)/)?(%(name_component_pattern)s(?:(?:/%(name_component_pattern)s)+)?)$' %
     {
         'hostname_pattern': docker_image_hostname_pattern.pattern,
         'name_component_pattern': docker_image_name_component_pattern.pattern

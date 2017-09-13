@@ -1,8 +1,5 @@
-REPOSITORY_NAME := {{ repository_name }}
-{% if registries -%}
-REGISTRIES := {{ registries | join(' ') }}
-{%- endif -%}
-TAGS := {{ tags | join(' ') }}
+REPOSITORY_NAME := samloh84/nodejs
+TAGS := 8.5.0 8.5.0-centos7
 CONTAINER_NAME := $(shell echo $(REPOSITORY_NAME) | sed -e 's/[^a-zA-Z0-9_.-]/-/g')
 
 .PHONY: all clean build push bash sudo run exec rm rmi
@@ -12,26 +9,11 @@ build:
 	set -x; \
 	DOCKER_BUILD_ARGS=""; \
 	for TAG in $(TAGS); do DOCKER_BUILD_ARGS+="-t $(REPOSITORY_NAME):$${TAG} "; done; \
-	{% if registries -%}
-	for REGISTRY in $(REGISTRIES); do \
-	for TAG in $(TAGS); do \
-	DOCKER_BUILD_ARGS+="-t $${REGISTRY}/$(REPOSITORY_NAME):$${TAG} "; \
-	done; \
-	done; \
-	{%- endif -%}
 	sudo docker build $${DOCKER_BUILD_ARGS} .
 
 push:
 	set -x; \
-	{% if registries -%}
-	for REGISTRY in $(REGISTRIES); do \
-	for TAG in $(TAGS); do \
-	sudo docker push $${REGISTRY}/$(REPOSITORY_NAME):$${TAG}; \
-	done; \
-	done;
-	{%- else -%}
 	for TAG in $(TAGS); do sudo docker push $(REPOSITORY_NAME):$${TAG}; done;
-	{%- endif %}
 
 run:
 	set -x; \
@@ -43,8 +25,7 @@ run:
 	for TAG in $(TAGS); do IMAGE_NAME="$(REPOSITORY_NAME):$${TAG} "; break; done; \
 	sudo docker run $${DOCKER_RUN_ARGS} $${IMAGE_NAME}
 
-{% set container_shell = 'ash' if base_os == 'alpine' else 'bash' -%}
-{{ container_shell }}:
+bash:
 	set -x; \
 	DOCKER_RUN_ARGS=""; \
 	DOCKER_RUN_ARGS+="--tty "; \
@@ -52,7 +33,7 @@ run:
 	DOCKER_RUN_ARGS+="--rm "; \
 	DOCKER_RUN_ARGS+="--name $(CONTAINER_NAME) "; \
 	for TAG in $(TAGS); do IMAGE_NAME="$(REPOSITORY_NAME):$${TAG} "; break; done; \
-	sudo docker run $${DOCKER_RUN_ARGS} $${IMAGE_NAME} {{ container_shell }}
+	sudo docker run $${DOCKER_RUN_ARGS} $${IMAGE_NAME} bash
 
 sudo:
 	set -x; \
@@ -64,7 +45,7 @@ sudo:
 	DOCKER_RUN_ARGS+="--user 0 "; \
 	DOCKER_RUN_ARGS+="--privileged "; \
 	for TAG in $(TAGS); do IMAGE_NAME="$(REPOSITORY_NAME):$${TAG} "; break; done; \
-	sudo docker run $${DOCKER_RUN_ARGS} $${IMAGE_NAME} {{ container_shell }}
+	sudo docker run $${DOCKER_RUN_ARGS} $${IMAGE_NAME} bash
 
 rm:
 	set -x; \

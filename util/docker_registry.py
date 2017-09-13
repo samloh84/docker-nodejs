@@ -57,6 +57,6 @@ def group_tags(tags):
                     break
         if append:
             tag_groups.append([tag])
-    for tag_group in tag_groups:
-        tag_group.sort(lambda x, y: -cmp(len(x), len(y)))
+
+    tag_groups = [sorted(tag_group, key=lambda x: -len(x)) for tag_group in tag_groups]
     return tag_groups

@@ -30,12 +30,15 @@ def update_nodejs_data(data, config, update_all_versions=False):
 
 def get_base_repository_info(config):
     base_repositories = config.get('base_repositories')
-    base_repository_info = []
+    base_repository_info_list = []
     for base_repository in base_repositories:
         image_name_components = parse_image_name(base_repository)
+        full_repo = image_name_components.get('full_repo')
         registry = image_name_components.get('registry')
         repo = image_name_components.get('repo')
         tag = image_name_components.get('tag')
+
+        pprint(image_name_components)
 
         i = repo.rfind('/')
         if i != -1:
@@ -48,6 +51,8 @@ def get_base_repository_info(config):
             registry_config_file = os.path.join(os.getcwd(), 'registries', registry + '.yml')
             if os.path.exists(registry_config_file):
                 registry_config = load_yaml(registry_config_file)
+                pprint(registry_config_file)
+                pprint(registry_config)
             else:
                 registry_config = pydash.get(config, ['base_repository_registries', registry], {})
 
@@ -63,15 +68,14 @@ def get_base_repository_info(config):
         tags = [tag for tag in tags if tag != 'latest']
         tag_groups = group_tags(tags)
 
-        base_repository_info.append({
-            'base_repository': base_repository,
-            'image_name_components': image_name_components,
-            'name': base_repository_name,
-            'tags': tags,
-            'tag_groups': tag_groups
-        })
+        base_repository_info = pydash.merge(image_name_components,
+                                            {'name': base_repository_name,
+                                             'tags': tags,
+                                             'tag_groups': tag_groups})
 
-    return base_repository_info
+        base_repository_info_list.append(base_repository_info)
+
+    return base_repository_info_list
 
 
 def render_nodejs_dockerfiles(data, config, update_all_versions=False, force_update=False):
@@ -96,40 +100,42 @@ def render_nodejs_dockerfiles(data, config, update_all_versions=False, force_upd
 
         for base_repository_info in base_repository_info_list:
 
-            base_repository = base_repository_info['base_repository']
-            tag_groups = base_repository_info['tag_groups']
+            base_repository_full_repo = base_repository_info['full_repo']
+
+            base_repository_tag_groups = base_repository_info['tag_groups']
             base_repository_name = base_repository_info['name']
 
-            for tag_group in tag_groups:
-                base_repository_tag = tag_group[0]
-                base_image_name = base_repository + ':' + base_repository_tag
+            for base_repository_tag_group in base_repository_tag_groups:
+                base_repository_main_tag = base_repository_tag_group[0]
+                base_image_name = base_repository_full_repo + ':' + base_repository_main_tag
 
-                dockerfile_context = os.path.join(os.getcwd(), version, base_repository_name + base_repository_tag)
+                dockerfile_context = os.path.join(os.getcwd(), version, base_repository_name + base_repository_main_tag)
 
                 tags = [version]
-                for tag in tag_group:
-                    tags.append(version + '-' + base_repository_name + tag)
+                for base_repository_tag in base_repository_tag_group:
+                    tags.append(version + '-' + base_repository_name + base_repository_tag)
+
                 version_info = semver.parse_version_info(normalize_version_to_semver(version))
 
                 base_os = re.compile('centos|alpine|ubuntu|debian|fedora|rhel').search(
-                    base_repository_name + base_repository_tag).group(0)
+                    base_repository_name + base_repository_main_tag).group(0)
 
                 render_data = {
-                    'registries': registries,
-                    'version': version,
-                    'version_info': version_info,
-                    'files': version_files,
-                    'base_repository_name': base_repository_name,
                     'base_image_name': base_image_name,
                     'base_os': base_os,
+                    'base_repository_name': base_repository_name,
                     'config': config,
+                    'files': version_files,
+                    'registries': registries,
                     'repository_name': repository_name,
-                    'tags': tags
+                    'tags': tags,
+                    'version': version,
+                    'version_info': version_info,
                 }
 
                 for template_file in template_files:
                     template_filenames = [
-                        template_file + '.' + base_repository_name + base_repository_tag + '.' + '.j2',
+                        template_file + '.' + base_repository_name + tag + '.' + '.j2',
                         template_file + '.' + base_repository_name + '.j2',
                         template_file + '.j2'
                     ]

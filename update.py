@@ -135,7 +135,7 @@ def render_nodejs_dockerfiles(data, config, update_all_versions=False, force_upd
 
                 for template_file in template_files:
                     template_filenames = [
-                        template_file + '.' + base_repository_name + tag + '.' + '.j2',
+                        template_file + '.' + base_repository_name + base_repository_tag + '.' + '.j2',
                         template_file + '.' + base_repository_name + '.j2',
                         template_file + '.j2'
                     ]

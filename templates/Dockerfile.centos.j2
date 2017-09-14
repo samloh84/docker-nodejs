@@ -16,15 +16,15 @@ ARG NODEJS_CHECKSUMS="{{ files['checksums']['.txt.asc']['filename'] }}"
 {{ macros.gpg_verify('${NODEJS_CHECKSUMS}') }} && \
 {%- endset %}
 {%- endif -%}
-{%- if files['binaries']['.tar.xz'] -%}
+{%- if files['binaries']['linux-x64']['.tar.xz'] -%}
 {% set binaries_build_args -%}
-ARG NODEJS_BINARIES_URL="{{ files['binaries']['.tar.xz']['url'] }}"
-ARG NODEJS_BINARIES="{{ files['binaries']['.tar.xz']['filename'] }}"
+ARG NODEJS_BINARIES_URL="{{ files['binaries']['linux-x64']['.tar.xz']['url'] }}"
+ARG NODEJS_BINARIES="{{ files['binaries']['linux-x64']['.tar.xz']['filename'] }}"
 {%- endset %}
-{%- elif files['binaries']['.tar.gz'] -%}
+{%- elif files['binaries']['linux-x64']['.tar.gz'] -%}
 {% set binaries_build_args -%}
-ARG NODEJS_BINARIES_URL="{{ files['binaries']['.tar.gz']['url'] }}"
-ARG NODEJS_BINARIES="{{ files['binaries']['.tar.gz']['filename'] }}"
+ARG NODEJS_BINARIES_URL="{{ files['binaries']['linux-x64']['.tar.gz']['url'] }}"
+ARG NODEJS_BINARIES="{{ files['binaries']['linux-x64']['.tar.gz']['filename'] }}"
 {%- endset %}
 {%- elif files['source']['.tar.xz'] -%}
 {% set source_build_args -%}
@@ -75,6 +75,8 @@ cd ${TEMP_DIR} && \
 {%- endif %}
 {{ macros.extract_tarball('${NODEJS_BINARIES}', '${INSTALL_DIR}') }} && \
 {%- elif source_build_args -%}
+NODEJS_COMPILE_DEPENDENCIES="gcc gcc-c++ make zlib-devel openssl-devel readline-devel bzip2-devel xz-devel gdbm-devel tk-devel sqlite-devel" && \
+yum-install ${NODEJS_COMPILE_DEPENDENCIES} && \
 {{ macros.curl('${NODEJS_SOURCE_URL}', '${NODEJS_SOURCE}') }} && \
 {% if checksums_build_args -%}
 {{ macros.sha256_verify_file('${NODEJS_CHECKSUMS}','${NODEJS_SOURCE}') }} && \
@@ -85,6 +87,8 @@ cd ${TEMP_DIR}/build && \
 ./configure --prefix=${INSTALL_DIR} && \
 make && \
 make install && \
+yum remove -y ${NODEJS_COMPILE_DEPENDENCIES} && \
+yum clean all && \
 {%- endif %}
 cd ${INSTALL_DIR} && \
 PATH=${PATH}:${INSTALL_DIR}/bin ${INSTALL_DIR}/bin/npm install npm@latest -g && \

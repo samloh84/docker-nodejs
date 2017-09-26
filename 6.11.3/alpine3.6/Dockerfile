@@ -1,16 +1,17 @@
-FROM samloh84/centos:7
+FROM samloh84/alpine:3.6
 
 ARG PRODUCT=nodejs
-ARG PRODUCT_VERSION=4.8.4
+ARG PRODUCT_VERSION=6.11.3
 ARG TEMP_DIR_ROOT=/tmp/${PRODUCT}
 ARG TEMP_DIR=/${TEMP_DIR_ROOT}/${PRODUCT_VERSION}
 ARG INSTALL_DIR_ROOT=/opt/${PRODUCT}
 ARG INSTALL_DIR=${INSTALL_DIR_ROOT}/${PRODUCT_VERSION}
 
-ARG NODEJS_BINARIES_URL="https://nodejs.org/dist/v4.8.4/node-v4.8.4-linux-x64.tar.xz"
-ARG NODEJS_BINARIES="node-v4.8.4-linux-x64.tar.xz"
+ARG NODEJS_SOURCE_URL="https://nodejs.org/dist/v6.11.3/node-v6.11.3.tar.xz"
+ARG NODEJS_SOURCE="node-v6.11.3.tar.xz"
+
 ARG NODEJS_GPG_KEYS="94AE36675C464D64BAFA68DD7434390BDBE9B9C5 B9AE9905FFD7803F25714661B63B535A4C206CA9 56730D5401028683275BD23C23EFEFE93C4CFFFE 71DCFD284A79C3B38668286BC97EC7A07EDE3FC1 FD3A5288F042B6850C66B31F09FE44734EB7990E C4F0DFFF4E8C1A8236409D08E73BC641CC11F4C8 DD8F2338BAE7501E3DD5AC78C273792F7D83545D"
-ARG NODEJS_CHECKSUMS_URL="https://nodejs.org/dist/v4.8.4/SHASUMS256.txt.asc"
+ARG NODEJS_CHECKSUMS_URL="https://nodejs.org/dist/v6.11.3/SHASUMS256.txt.asc"
 ARG NODEJS_CHECKSUMS="SHASUMS256.txt.asc"
 
 USER ${ROOT_UID}
@@ -26,9 +27,18 @@ gpg --keyserver ha.pool.sks-keyservers.net --recv-keys ${GPG_KEY} ; \
 done && \
 curl -LjSs ${NODEJS_CHECKSUMS_URL} -o ${NODEJS_CHECKSUMS} && \
 gpg --verify ${NODEJS_CHECKSUMS} && \
-curl -LjSs ${NODEJS_BINARIES_URL} -o ${NODEJS_BINARIES} && \
-grep ${NODEJS_BINARIES} ${NODEJS_CHECKSUMS} | sha256sum -c - && \
-tar -xf ${NODEJS_BINARIES} --strip-components=1 -C ${INSTALL_DIR} && \
+NODEJS_COMPILE_DEPENDENCIES="gcc gcc-c++ make zlib-devel openssl-devel readline-devel bzip2-devel xz-devel gdbm-devel tk-devel sqlite-devel" && \
+apk-install ${NODEJS_COMPILE_DEPENDENCIES} && \
+curl -LjSs ${NODEJS_SOURCE_URL} -o ${NODEJS_SOURCE} && \
+grep ${NODEJS_SOURCE} ${NODEJS_CHECKSUMS} | sha256sum -c - && \
+mkdir -p ${TEMP_DIR}/build && \
+tar -xf ${NODEJS_SOURCE} --strip-components=1 -C ${TEMP_DIR}/build && \
+cd ${TEMP_DIR}/build && \
+./configure --prefix=${INSTALL_DIR} && \
+make && \
+make install && \
+apk remove -y ${NODEJS_COMPILE_DEPENDENCIES} && \
+rm -rf /var/cache/apk/* && \
 cd ${INSTALL_DIR} && \
 PATH=${PATH}:${INSTALL_DIR}/bin ${INSTALL_DIR}/bin/npm install npm@latest -g && \
 fix-ownership ${INSTALL_DIR} && \

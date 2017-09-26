@@ -1,7 +1,7 @@
 FROM {{ base_image_name }}
 
 {%- import 'macros.j2' as macros -%}
-{%- if files['checksums']['.txt.asc'] -%}
+{% if files['checksums']['.txt.asc'] -%}
 {% set checksums_build_args -%}
 ARG NODEJS_GPG_KEYS="94AE36675C464D64BAFA68DD7434390BDBE9B9C5 B9AE9905FFD7803F25714661B63B535A4C206CA9 56730D5401028683275BD23C23EFEFE93C4CFFFE 71DCFD284A79C3B38668286BC97EC7A07EDE3FC1 FD3A5288F042B6850C66B31F09FE44734EB7990E C4F0DFFF4E8C1A8236409D08E73BC641CC11F4C8 DD8F2338BAE7501E3DD5AC78C273792F7D83545D"
 ARG NODEJS_CHECKSUMS_URL="{{ files['checksums']['.txt.asc']['url'] }}"
@@ -16,17 +16,7 @@ ARG NODEJS_CHECKSUMS="{{ files['checksums']['.txt.asc']['filename'] }}"
 {{ macros.gpg_verify('${NODEJS_CHECKSUMS}') }} && \
 {%- endset %}
 {%- endif -%}
-{%- if files['binaries']['linux-x64']['.tar.xz'] -%}
-{% set binaries_build_args -%}
-ARG NODEJS_BINARIES_URL="{{ files['binaries']['linux-x64']['.tar.xz']['url'] }}"
-ARG NODEJS_BINARIES="{{ files['binaries']['linux-x64']['.tar.xz']['filename'] }}"
-{%- endset %}
-{%- elif files['binaries']['linux-x64']['.tar.gz'] -%}
-{% set binaries_build_args -%}
-ARG NODEJS_BINARIES_URL="{{ files['binaries']['linux-x64']['.tar.gz']['url'] }}"
-ARG NODEJS_BINARIES="{{ files['binaries']['linux-x64']['.tar.gz']['filename'] }}"
-{%- endset %}
-{%- elif files['source']['.tar.xz'] -%}
+{% if files['source']['.tar.xz'] -%}
 {% set source_build_args -%}
 ARG NODEJS_SOURCE_URL="{{ files['source']['.tar.xz']['url'] }}"
 ARG NODEJS_SOURCE="{{ files['source']['.tar.xz']['filename'] }}"
@@ -45,9 +35,7 @@ ARG TEMP_DIR=/${TEMP_DIR_ROOT}/${PRODUCT_VERSION}
 ARG INSTALL_DIR_ROOT=/opt/${PRODUCT}
 ARG INSTALL_DIR=${INSTALL_DIR_ROOT}/${PRODUCT_VERSION}
 
-{% if binaries_build_args -%}
-{{ binaries_build_args }}
-{%- elif source_build_args -%}
+{% if source_build_args -%}
 {{ source_build_args }}
 {%- endif %}
 {% if checksums_build_args -%}
@@ -65,15 +53,10 @@ cd ${TEMP_DIR} && \
 {{ download_and_verify_checksums }}
 {%- endif %}
 {%- endif %}
-{% if binaries_build_args -%}
-{{ macros.curl('${NODEJS_BINARIES_URL}', '${NODEJS_BINARIES}') }} && \
-{% if checksums_build_args -%}
-{{ macros.sha256_verify_file('${NODEJS_CHECKSUMS}','${NODEJS_BINARIES}') }} && \
-{%- endif %}
-{{ macros.extract_tarball('${NODEJS_BINARIES}', '${INSTALL_DIR}') }} && \
-{%- elif source_build_args -%}
-NODEJS_COMPILE_DEPENDENCIES="python gcc gcc-c++ make kernel-headers zlib-devel openssl-devel readline-devel bzip2-devel xz-devel gdbm-devel tk-devel sqlite-devel" && \
-yum-install ${NODEJS_COMPILE_DEPENDENCIES} && \
+{% if source_build_args -%}
+apk-install libstdc++ && \
+NODEJS_COMPILE_DEPENDENCIES="python gcc g++ make linux-headers zlib-dev openssl-dev readline-dev bzip2-dev xz-dev gdbm-dev tk-dev sqlite-dev" && \
+apk-install ${NODEJS_COMPILE_DEPENDENCIES} && \
 {{ macros.curl('${NODEJS_SOURCE_URL}', '${NODEJS_SOURCE}') }} && \
 {% if checksums_build_args -%}
 {{ macros.sha256_verify_file('${NODEJS_CHECKSUMS}','${NODEJS_SOURCE}') }} && \
@@ -84,8 +67,8 @@ cd ${TEMP_DIR}/build && \
 ./configure --prefix=${INSTALL_DIR} && \
 make && \
 make install && \
-yum remove -y ${NODEJS_COMPILE_DEPENDENCIES} && \
-yum clean all && \
+apk del -y ${NODEJS_COMPILE_DEPENDENCIES} && \
+rm -rf /var/cache/apk/* && \
 {%- endif %}
 cd ${INSTALL_DIR} && \
 PATH=${PATH}:${INSTALL_DIR}/bin ${INSTALL_DIR}/bin/npm install npm@latest -g && \

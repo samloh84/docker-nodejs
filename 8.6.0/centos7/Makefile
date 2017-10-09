@@ -1,5 +1,5 @@
 REPOSITORY_NAME := samloh84/nodejs
-TAGS := 4.8.4 4.8.4-centos7
+TAGS := 8.6.0 8.6.0-centos7
 CONTAINER_NAME := $(shell echo $(REPOSITORY_NAME) | sed -e 's/[^a-zA-Z0-9_.-]/-/g')
 
 .PHONY: all clean build push bash sudo run exec rm rmi

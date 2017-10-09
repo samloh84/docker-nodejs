@@ -27,7 +27,8 @@ gpg --keyserver ha.pool.sks-keyservers.net --recv-keys ${GPG_KEY} ; \
 done && \
 curl -LjSs ${NODEJS_CHECKSUMS_URL} -o ${NODEJS_CHECKSUMS} && \
 gpg --verify ${NODEJS_CHECKSUMS} && \
-NODEJS_COMPILE_DEPENDENCIES="gcc gcc-c++ make zlib-devel openssl-devel readline-devel bzip2-devel xz-devel gdbm-devel tk-devel sqlite-devel" && \
+apk-install libstdc++ && \
+NODEJS_COMPILE_DEPENDENCIES="python gcc g++ make linux-headers zlib-dev openssl-dev readline-dev bzip2-dev xz-dev gdbm-dev tk-dev sqlite-dev" && \
 apk-install ${NODEJS_COMPILE_DEPENDENCIES} && \
 curl -LjSs ${NODEJS_SOURCE_URL} -o ${NODEJS_SOURCE} && \
 grep ${NODEJS_SOURCE} ${NODEJS_CHECKSUMS} | sha256sum -c - && \
@@ -37,7 +38,7 @@ cd ${TEMP_DIR}/build && \
 ./configure --prefix=${INSTALL_DIR} && \
 make && \
 make install && \
-apk remove -y ${NODEJS_COMPILE_DEPENDENCIES} && \
+apk del -y ${NODEJS_COMPILE_DEPENDENCIES} && \
 rm -rf /var/cache/apk/* && \
 cd ${INSTALL_DIR} && \
 PATH=${PATH}:${INSTALL_DIR}/bin ${INSTALL_DIR}/bin/npm install npm@latest -g && \

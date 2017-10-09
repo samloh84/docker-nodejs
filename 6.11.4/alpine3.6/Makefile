@@ -1,5 +1,5 @@
 REPOSITORY_NAME := samloh84/nodejs
-TAGS := 4.8.4 4.8.4-centos7
+TAGS := 6.11.4 6.11.4-alpine3.6
 CONTAINER_NAME := $(shell echo $(REPOSITORY_NAME) | sed -e 's/[^a-zA-Z0-9_.-]/-/g')
 
 .PHONY: all clean build push bash sudo run exec rm rmi
@@ -25,7 +25,7 @@ run:
 	for TAG in $(TAGS); do IMAGE_NAME="$(REPOSITORY_NAME):$${TAG} "; break; done && \
 	sudo docker run $${DOCKER_RUN_ARGS} $${IMAGE_NAME}
 
-bash:
+ash:
 	set -x && \
 	DOCKER_RUN_ARGS="$${DOCKER_RUN_ARGS} " && \
 	DOCKER_RUN_ARGS+="--tty " && \
@@ -33,7 +33,7 @@ bash:
 	DOCKER_RUN_ARGS+="--rm " && \
 	DOCKER_RUN_ARGS+="--name $(CONTAINER_NAME) " && \
 	for TAG in $(TAGS); do IMAGE_NAME="$(REPOSITORY_NAME):$${TAG} "; break; done && \
-	sudo docker run $${DOCKER_RUN_ARGS} $${IMAGE_NAME} bash
+	sudo docker run $${DOCKER_RUN_ARGS} $${IMAGE_NAME} ash
 
 sudo:
 	set -x && \
@@ -45,7 +45,7 @@ sudo:
 	DOCKER_RUN_ARGS+="--user 0 "; \
 	DOCKER_RUN_ARGS+="--privileged "; \
 	for TAG in $(TAGS); do IMAGE_NAME="$(REPOSITORY_NAME):$${TAG} "; break; done; \
-	sudo docker run $${DOCKER_RUN_ARGS} $${IMAGE_NAME} bash
+	sudo docker run $${DOCKER_RUN_ARGS} $${IMAGE_NAME} ash
 
 rm:
 	set -x && \

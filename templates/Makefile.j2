@@ -96,7 +96,7 @@ save:
 	IMAGE_NAME="$(REPOSITORY_NAME):$${TAG}"; \
 	fi && \
 	{% endif -%}
-	ARCHIVE_NAME="$$(echo $${IMAGE_NAME} | sed -e 's/[^a-zA-Z0-9_.-]\+/_/g').tar.gz" && \
+	ARCHIVE_NAME="$$(echo $${IMAGE_NAME} | sed -e 's/[^a-zA-Z0-9_.-]\+/_/g').sh" && \
 	echo -e "#!/bin/bash -e\necho Importing $${IMAGE_NAME}\nARCHIVE=\$$(awk '/^__ARCHIVE_MARKER__/ { print NR + 1; exit 0; }' \$$0)\ntail -n+\$$ARCHIVE \$$0 | docker import -\ndocker push $${IMAGE_NAME}\nexit 0\n__ARCHIVE_MARKER__" > $${ARCHIVE_NAME}
 	sudo docker tag $${ORIGINAL_IMAGE_NAME} $${IMAGE_NAME} && \
 	sudo docker save $${IMAGE_NAME} | gzip -9 >> $${ARCHIVE_NAME}
